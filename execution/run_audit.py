@@ -88,7 +88,16 @@ def execute_audit(business_name: str, url: str, email: str, output_base_dir: str
     md_file = os.path.join(out_dir, "audit_detail.md")
     md_reporter.generate_markdown(result, md_file)
     
-    # 5. Internal Storage
+    # 5. Email Delivery (v1.1)
+    from execution.audit_engine.delivery import EmailDispatcher
+    dispatcher = EmailDispatcher()
+    dispatcher.send_audit_report(
+        to_email=submission.contact_email,
+        business_name=submission.business_name,
+        pdf_path=pdf_file
+    )
+
+    # 6. Internal Storage
     from execution.audit_engine.storage import InternalStorage
     storage = InternalStorage()
     storage.save_result(result, detailed_json_path=os.path.abspath(md_file))
