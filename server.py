@@ -44,7 +44,8 @@ def run_audit_task(payload: GHLPayload):
         report_path = execute_audit(
             business_name=payload.business_name,
             url=payload.website_url,
-            email=payload.contact_email
+            email=payload.contact_email,
+            contact_name=payload.contact_name
         )
         print(f"✅ AUDIT COMPLETE. Report at {report_path}\n")
         

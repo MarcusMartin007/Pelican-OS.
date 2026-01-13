@@ -10,7 +10,7 @@ from execution.audit_engine.scorer import Scorer
 from execution.audit_engine.reporter import PDFReporter
 from execution.audit_engine.utils import normalize_url
 
-def execute_audit(business_name: str, url: str, email: str, output_base_dir: str = None) -> str:
+def execute_audit(business_name: str, url: str, email: str, contact_name: str = None, output_base_dir: str = None) -> str:
     """
     Executes the full audit workflow.
     Returns the paths to the generated reports.
@@ -19,13 +19,19 @@ def execute_audit(business_name: str, url: str, email: str, output_base_dir: str
     normalized_url = normalize_url(url)
     
     # --- Robustness Patch: Business Name Fallback ---
-    # If GHL sends an empty string or "Pelican Panache AI" (the generic agency),
-    # we try to use a more specific name if possible.
-    if not business_name or business_name.strip().lower() in ["", "null", "none"]:
-        # Try to derive from email or URL
-        derived = email.split("@")[0].title().replace(".", " ")
-        business_name = derived if derived else "Audit Guest"
-        print(f"⚠️ WEBHOOK: Business Name missing. Falling back to: {business_name}")
+    # We check if business_name is empty or generic agency name
+    is_missing = not business_name or business_name.strip().lower() in ["", "null", "none", "pelican panache ai"]
+    
+    if is_missing:
+        # Priority 1: Use Contact Name (Professional)
+        if contact_name and contact_name.strip():
+            business_name = contact_name.strip()
+        # Priority 2: Derive from Email (Fallback)
+        else:
+            derived = email.split("@")[0].title().replace(".", " ")
+            business_name = derived if derived else "Audit Guest"
+        
+        print(f"⚠️ WEBHOOK: Business Name missing/generic. Falling back to: {business_name}")
 
     submission = AuditSubmission(
         business_name=business_name,
