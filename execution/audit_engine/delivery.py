@@ -63,17 +63,27 @@ The Pelican Panache Team
 
         # Send
         try:
+            import socket
             print(f"📡 SMTP CONNECT: Attempting connection to {self.smtp_host}:{self.smtp_port}...")
+            
+            # Diagnostic: Check if we can resolve the host
+            try:
+                ip_info = socket.getaddrinfo(self.smtp_host, self.smtp_port, socket.AF_INET)
+                target_ip = ip_info[0][4][0]
+                print(f"🔍 DNS RESOLVED: {self.smtp_host} -> {target_ip}")
+            except Exception as e:
+                print(f"❌ DNS ERROR: Could not resolve {self.smtp_host}: {e}")
+
             if self.smtp_port == 465:
-                # Use SSL for port 465
-                print("🔒 SMTP MODE: Using SSL (Port 465)")
-                with smtplib.SMTP_SSL(self.smtp_host, self.smtp_port, timeout=15) as server:
+                # Use SSL for port 465 (Forcing IPv4)
+                print("🔒 SMTP MODE: Using SSL (Port 465) - Forcing IPv4")
+                with smtplib.SMTP_SSL(target_ip, self.smtp_port, timeout=15) as server:
                     server.login(self.smtp_user, self.smtp_pass)
                     server.send_message(msg)
             else:
-                # Use TLS for other ports (587, 25)
-                print(f"🔓 SMTP MODE: Using TLS (Port {self.smtp_port})")
-                with smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=15) as server:
+                # Use TLS for other ports (Forcing IPv4)
+                print(f"🔓 SMTP MODE: Using TLS (Port {self.smtp_port}) - Forcing IPv4")
+                with smtplib.SMTP(target_ip, self.smtp_port, timeout=15) as server:
                     server.starttls()
                     server.login(self.smtp_user, self.smtp_pass)
                     server.send_message(msg)
