@@ -63,14 +63,17 @@ The Pelican Panache Team
 
         # Send
         try:
+            print(f"📡 SMTP CONNECT: Attempting connection to {self.smtp_host}:{self.smtp_port}...")
             if self.smtp_port == 465:
                 # Use SSL for port 465
-                with smtplib.SMTP_SSL(self.smtp_host, self.smtp_port) as server:
+                print("🔒 SMTP MODE: Using SSL (Port 465)")
+                with smtplib.SMTP_SSL(self.smtp_host, self.smtp_port, timeout=15) as server:
                     server.login(self.smtp_user, self.smtp_pass)
                     server.send_message(msg)
             else:
                 # Use TLS for other ports (587, 25)
-                with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
+                print(f"🔓 SMTP MODE: Using TLS (Port {self.smtp_port})")
+                with smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=15) as server:
                     server.starttls()
                     server.login(self.smtp_user, self.smtp_pass)
                     server.send_message(msg)
