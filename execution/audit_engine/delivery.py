@@ -63,10 +63,17 @@ The Pelican Panache Team
 
         # Send
         try:
-            with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
-                server.starttls()
-                server.login(self.smtp_user, self.smtp_pass)
-                server.send_message(msg)
+            if self.smtp_port == 465:
+                # Use SSL for port 465
+                with smtplib.SMTP_SSL(self.smtp_host, self.smtp_port) as server:
+                    server.login(self.smtp_user, self.smtp_pass)
+                    server.send_message(msg)
+            else:
+                # Use TLS for other ports (587, 25)
+                with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
+                    server.starttls()
+                    server.login(self.smtp_user, self.smtp_pass)
+                    server.send_message(msg)
             print(f"✅ EMAIL SENT: Audit report delivered to {to_email}")
             return True
         except Exception as e:
