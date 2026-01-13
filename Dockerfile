@@ -1,6 +1,10 @@
 # Use official Python runtime as a parent image
 FROM python:3.9-slim
 
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
 # Set working directory
 WORKDIR /app
 
