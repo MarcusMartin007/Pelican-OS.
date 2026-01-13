@@ -9,6 +9,7 @@ class EmailDispatcher:
     def __init__(self):
         self.api_key = os.getenv("SENDGRID_API_KEY")
         self.from_email = os.getenv("FROM_EMAIL")
+        self.bcc_email = os.getenv("BCC_EMAIL")
 
     def is_configured(self):
         return all([self.api_key, self.from_email])
@@ -37,6 +38,9 @@ class EmailDispatcher:
                 The Pelican Panache Team</p>
             """
         )
+
+        if self.bcc_email:
+            message.add_bcc(self.bcc_email)
 
         # Attach PDF
         try:
