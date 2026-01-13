@@ -1,0 +1,17 @@
+# Intermediate files
+.tmp/
+
+# Environment variables
+.env
+
+# Google OAuth credentials
+credentials.json
+token.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+.DS_Store

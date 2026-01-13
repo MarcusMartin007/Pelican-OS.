@@ -1,0 +1,10 @@
+requests
+python-dotenv
+beautifulsoup4
+lxml
+playwright
+jinja2
+fastapi
+uvicorn
+pydantic
+
