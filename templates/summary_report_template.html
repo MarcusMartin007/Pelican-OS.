@@ -21,7 +21,7 @@
         .header {
             background: #111827;
             color: white;
-            padding: 40px;
+            padding: 30px 40px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -29,11 +29,12 @@
 
         .header h1 {
             margin: 0;
-            font-size: 24px;
+            font-size: 22px;
+            font-weight: 700;
         }
 
         .container {
-            padding: 40px;
+            padding: 30px 40px;
         }
 
         .score-card {
@@ -41,10 +42,11 @@
             align-items: center;
             justify-content: center;
             flex-direction: column;
-            margin-bottom: 40px;
-            padding: 40px;
+            margin-bottom: 30px;
+            padding: 30px;
             background: #f9fafb;
             border-radius: 12px;
+            border: 1px solid #f3f4f6;
         }
 
         .overall-score {
@@ -64,14 +66,14 @@
         .layer-breakdown {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 20px;
-            margin-top: 20px;
+            gap: 15px;
+            margin-top: 15px;
         }
 
         .layer-row {
             border: 1px solid #e5e7eb;
             border-radius: 8px;
-            padding: 20px;
+            padding: 15px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -79,84 +81,113 @@
 
         .layer-title {
             font-weight: 600;
-            font-size: 16px;
+            font-size: 15px;
         }
 
         .layer-score {
             font-weight: 700;
             color: #2563eb;
-            font-size: 16px;
+            font-size: 15px;
+        }
+
+        .ai-summary-box {
+            page-break-before: always;
+            margin-top: 40px;
+            border: 2px solid #2563eb;
+            border-radius: 12px;
+            padding: 30px;
+            background: #fff;
         }
 
         .recap {
-            margin-top: 40px;
+            margin-top: 30px;
             padding: 20px;
             border-left: 4px solid #2563eb;
             background: #eff6ff;
+            border-radius: 0 8px 8px 0;
         }
 
         .recap h3 {
             margin-top: 0;
             color: #1e40af;
+            font-size: 16px;
         }
 
         .recap p {
             font-size: 14px;
             line-height: 1.5;
             color: #1e3a8a;
+            margin-bottom: 0;
         }
 
-        .cta {
-            margin-top: 50px;
+        .contact-footer {
+            margin-top: 40px;
+            padding: 30px;
+            background: #f8fafc;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .contact-details {
+            font-size: 13px;
+            color: #475569;
+            line-height: 1.6;
+        }
+
+        .contact-details strong {
+            color: #1e293b;
+            font-size: 15px;
+        }
+
+        .page-footer {
+            margin-top: 30px;
             text-align: center;
-        }
-
-        .cta-button {
-            display: inline-block;
-            background: #2563eb;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .footer {
-            margin-top: 50px;
-            text-align: center;
-            color: #6b7280;
-            font-size: 12px;
+            color: #94a3b8;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
     </style>
 </head>
 
 <body>
     <div class="header">
-        <div>
-            <h1>Visibility Audit Summary</h1>
-            <div style="font-size: 14px; opacity: 0.8; margin-top: 8px;">{{ submission.business_name }}</div>
+        <div style="display: flex; align-items: center;">
+            {% if logo_base64 %}
+            <img src="data:image/png;base64,{{ logo_base64 }}" style="height: 50px; margin-right: 20px;">
+            {% endif %}
+            <div>
+                <h1>Visibility Audit Summary</h1>
+                <div style="font-size: 13px; opacity: 0.9; margin-top: 5px;">
+                    Report for: <strong>{{ submission.business_name }}</strong>
+                </div>
+            </div>
         </div>
-        <div style="text-align: right;">
-            <div>{{ submission.timestamp.strftime('%Y-%m-%d') }}</div>
+        <div style="text-align: right; font-size: 14px;">
+            <div>{{ submission.timestamp.strftime('%B %d, %Y') }}</div>
         </div>
-        }
     </div>
 
     <div class="container">
+        <!-- PAGE 1 -->
         <div class="score-card">
-            <div style="font-size: 16px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px;">Overall
-                Visibility Score</div>
+            <div
+                style="font-size: 14px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">
+                Overall Visibility Score</div>
             <div class="overall-score">{{ overall_score.total_points }}</div>
             <div class="grade">Grade: {{ overall_score.grade }}</div>
-            <div style="margin-top: 24px; font-size: 16px; color: #4b5563; text-align: center; line-height: 1.5;">
+            <div
+                style="margin-top: 20px; font-size: 15px; color: #475569; text-align: center; line-height: 1.6; max-width: 600px;">
                 {{ overall_score.summary_text }}
             </div>
-            <div style="margin-top: 12px; font-size: 14px; color: #6b7280; text-align: center; font-style: italic;">
+            <div style="margin-top: 15px; font-size: 13px; color: #94a3b8; text-align: center; font-style: italic;">
                 {{ overall_score.ai_narrative.benchmark_text }}
             </div>
         </div>
 
-        <h2>Category Breakdown</h2>
+        <h2 style="font-size: 18px; color: #1e293b; margin-bottom: 10px;">Category Breakdown</h2>
         <div class="layer-breakdown">
             {% for layer in overall_score.layer_scores %}
             <div class="layer-row">
@@ -166,60 +197,77 @@
             {% endfor %}
         </div>
 
-        <div style="margin-top: 40px; border: 2px solid #2563eb; border-radius: 12px; padding: 30px; background: #fff;">
-            <h2 style="margin-top: 0; color: #2563eb; font-size: 20px;">🤖 AI Visibility Summary</h2>
+        <!-- PAGE 2 TRIGGERED BY CSS -->
+        <div class="ai-summary-box">
+            <h2 style="margin-top: 0; color: #2563eb; font-size: 18px; display: flex; align-items: center;">
+                <span style="margin-right: 10px;">🤖</span> AI Visibility Summary
+            </h2>
 
-            <p style="font-size: 14px; color: #374151; font-weight: 600;">{{
+            <p style="font-size: 14px; color: #334155; font-weight: 600; line-height: 1.5;">{{
                 overall_score.ai_narrative.readiness_explanation }}</p>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
-                <div style="background: #ecfdf5; padding: 15px; border-radius: 8px;">
-                    <strong style="color: #047857; font-size: 14px;">Strength</strong>
-                    <p style="margin: 5px 0 0; font-size: 13px; color: #065f46;">{{
+                <div style="background: #f0fdf4; padding: 15px; border-radius: 8px; border: 1px solid #dcfce7;">
+                    <strong
+                        style="color: #166534; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Core
+                        Strength</strong>
+                    <p style="margin: 8px 0 0; font-size: 13px; color: #14532d; line-height: 1.4;">{{
                         overall_score.ai_narrative.strength_summary }}</p>
                 </div>
-                <div style="background: #fef2f2; padding: 15px; border-radius: 8px;">
-                    <strong style="color: #b91c1c; font-size: 14px;">Vital Gap</strong>
-                    <p style="margin: 5px 0 0; font-size: 13px; color: #991b1b;">{{
+                <div style="background: #fef2f2; padding: 15px; border-radius: 8px; border: 1px solid #fee2e2;">
+                    <strong
+                        style="color: #991b1b; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Visibility
+                        Gap</strong>
+                    <p style="margin: 8px 0 0; font-size: 13px; color: #7f1d1d; line-height: 1.4;">{{
                         overall_score.ai_narrative.gap_summary }}</p>
                 </div>
             </div>
 
-            <p style="font-size: 14px; margin-top: 20px; color: #4b5563;">
+            <p style="font-size: 14px; margin-top: 20px; color: #475569; line-height: 1.5;">
                 <strong>Bottleneck Impact:</strong> {{ overall_score.ai_narrative.bottleneck_impact }}
             </p>
 
-            <h3 style="font-size: 16px; margin-top: 20px; margin-bottom: 10px;">Fastest Score Gains</h3>
-            <ul style="margin: 0; padding-left: 20px; font-size: 14px; color: #374151;">
+            <h3 style="font-size: 15px; margin-top: 25px; margin-bottom: 12px; color: #1e293b;">Fastest Score Gains</h3>
+            <ul style="margin: 0; padding-left: 20px; font-size: 14px; color: #334155; line-height: 1.6;">
                 {% for step in overall_score.ai_narrative.fastest_gains %}
-                <li style="margin-bottom: 5px;">{{ step }}</li>
+                <li style="margin-bottom: 8px;">{{ step }}</li>
                 {% endfor %}
             </ul>
 
             <p
-                style="font-size: 14px; margin-top: 25px; color: #4338ca; font-style: italic; font-weight: 500; border-top: 1px dashed #e5e7eb; padding-top: 15px;">
+                style="font-size: 13px; margin-top: 25px; color: #4338ca; font-style: italic; font-weight: 500; border-top: 1px dashed #e2e8f0; padding-top: 15px;">
                 {{ overall_score.ai_narrative.closing_line }}
             </p>
         </div>
 
         <div class="recap">
-            <h3>Audit Recap</h3>
+            <h3>Strategic Audit Recap</h3>
             <p>
-                Your visibility score determines how effectively you are capturing market demand.
-                A score of {{ overall_score.total_points }} indicates that there are
-                {% if overall_score.total_points < 50 %} significant opportunities for improvement across multiple
-                    layers. {% elif overall_score.total_points < 80 %} some solid foundations, but key gaps preventing
-                    full visibility. {% else %} excellent visibility foundations, with minor optimizations available. {%
-                    endif %} Review the category breakdown to identify your weakest layers. </p>
+                Your visibility score determines how effectively you are capturing market demand in the AI era.
+                A score of <strong>{{ overall_score.total_points }}</strong> indicates that
+                {% if overall_score.total_points < 50 %} there are significant opportunities for improvement across
+                    multiple layers to establish baseline trust. {% elif overall_score.total_points < 80 %} you have
+                    solid foundations, but key technical gaps are preventing full AI-driven visibility. {% else %} you
+                    have excellent visibility foundations, with high readiness for automated AI citation. {% endif %}
+                    </p>
         </div>
 
-        <div class="cta">
-            <p style="margin-bottom: 20px;">Want to review the detailed findings and fix these gaps?</p>
-            <a href="#" class="cta-button">Book a Strategy Call</a>
+        <div class="contact-footer">
+            <div class="contact-details">
+                <strong>{{ contact_info.name }}</strong><br>
+                {{ contact_info.title }}<br>
+                {{ contact_info.phone }}<br>
+                {{ contact_info.email }}
+            </div>
+            <div style="text-align: right;">
+                <a href="mailto:{{ contact_info.email }}"
+                    style="display: inline-block; background: #2563eb; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 13px;">Book
+                    Strategy Session</a>
+            </div>
         </div>
 
-        <div class="footer">
-            Generated by PPM AI Visibility Audit Automation
+        <div class="page-footer">
+            Pelican Panache AI Visibility Audit • {{ submission.timestamp.strftime('%Y') }}
         </div>
     </div>
 </body>

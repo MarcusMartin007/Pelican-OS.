@@ -8,15 +8,18 @@ class PDFReporter:
         self.template_path = template_path
         self.env = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.dirname(os.path.abspath(template_path))))
 
-    def generate_html(self, result: AuditResult) -> str:
+    def generate_html(self, result: AuditResult, extra_context: dict = None) -> str:
         template = self.env.get_template(os.path.basename(self.template_path))
-        return template.render(
-            submission=result.submission,
-            overall_score=result.overall_score
-        )
+        render_context = {
+            "submission": result.submission,
+            "overall_score": result.overall_score
+        }
+        if extra_context:
+            render_context.update(extra_context)
+        return template.render(**render_context)
 
-    def generate_pdf(self, result: AuditResult, output_path: str):
-        html_content = self.generate_html(result)
+    def generate_pdf(self, result: AuditResult, output_path: str, extra_context: dict = None):
+        html_content = self.generate_html(result, extra_context)
         
         # Ensure output directory exists
         os.makedirs(os.path.dirname(output_path), exist_ok=True)

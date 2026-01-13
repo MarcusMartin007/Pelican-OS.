@@ -17,11 +17,32 @@ def execute_audit(business_name: str, url: str, email: str, output_base_dir: str
     """
     # 1. Intake & Normalize
     normalized_url = normalize_url(url)
+    
+    # --- Robustness Patch: Business Name Fallback ---
+    # If GHL sends an empty string or "Pelican Panache AI" (the generic agency),
+    # we try to use a more specific name if possible.
+    if not business_name or business_name.strip().lower() in ["", "null", "none"]:
+        # Try to derive from email or URL
+        derived = email.split("@")[0].title().replace(".", " ")
+        business_name = derived if derived else "Audit Guest"
+        print(f"⚠️ WEBHOOK: Business Name missing. Falling back to: {business_name}")
+
     submission = AuditSubmission(
         business_name=business_name,
         website_url=normalized_url,
         contact_email=email
     )
+    
+    # --- UI Asset: Load Logo ---
+    import base64
+    logo_base64 = ""
+    logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "logo.png")
+    try:
+        if os.path.exists(logo_path):
+            with open(logo_path, "rb") as image_file:
+                logo_base64 = base64.b64encode(image_file.read()).decode()
+    except Exception as e:
+        print(f"⚠️ UI ERROR: Could not load logo for PDF: {e}")
     
     print(f"Starting Audit for: {submission.business_name} ({submission.website_url})")
     
@@ -80,7 +101,19 @@ def execute_audit(business_name: str, url: str, email: str, output_base_dir: str
     # PDF (Summary Only)
     pdf_reporter = PDFReporter(template_path="templates/summary_report_template.html")
     pdf_file = os.path.join(out_dir, "audit_summary.pdf")
-    pdf_reporter.generate_pdf(result, pdf_file)
+    
+    # Extra context for branding
+    branding_context = {
+        "logo_base64": logo_base64,
+        "contact_info": {
+            "name": "Marcus Martin",
+            "title": "Founder/CVO Pelican Panache",
+            "phone": "813-361-6616",
+            "email": "Marcus@pelicanpanachemarketing.com"
+        }
+    }
+    
+    pdf_reporter.generate_pdf(result, pdf_file, extra_context=branding_context)
     
     # Markdown (Detailed)
     from execution.audit_engine.params_reporter import MarkdownReporter
