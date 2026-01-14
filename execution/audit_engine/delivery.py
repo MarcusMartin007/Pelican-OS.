@@ -40,7 +40,10 @@ class EmailDispatcher:
         )
 
         if self.bcc_email:
+            print(f"📧 EMAIL DISPATCHER: Adding BCC: {self.bcc_email}")
             message.add_bcc(self.bcc_email)
+        else:
+            print("📧 EMAIL DISPATCHER: No BCC_EMAIL configured.")
 
         # Attach PDF
         try:
