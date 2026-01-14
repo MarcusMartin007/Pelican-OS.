@@ -30,11 +30,7 @@ class GHLPayload(BaseModel):
     # Optional GHL specific fields
     contact_id: Optional[str] = None
     contact_phone: Optional[str] = None
-    primary_business_category: Optional[str] = None
     google_business_profile_url: Optional[str] = None
-    audit_source: Optional[str] = None
-    audit_status: Optional[str] = None
-    workflow_id: Optional[str] = None
 
 def run_audit_task(payload: GHLPayload):
     try:
