@@ -14,42 +14,71 @@ class EmailDispatcher:
     def is_configured(self):
         return all([self.api_key, self.from_email])
 
-    def send_audit_report(self, to_email: str, business_name: str, pdf_path: str):
+    def send_audit_report(self, to_email: str, business_name: str, pdf_path: str, contact_name: str = None, score: int = 0):
         """
         Sends the audit report PDF as an attachment using the SendGrid Web API.
+        Uses a new high-conversion template.
         """
         if not self.is_configured():
             print("⚠️ EMAIL DISPATCHER: SendGrid API not configured (SENDGRID_API_KEY or FROM_EMAIL missing). Skipping email delivery.")
             return False
+
+        first_name = contact_name.split()[0] if contact_name else "Guest"
+        
+        # Determine visibility range description
+        if score < 55:
+            range_desc = "foundational visibility range"
+        elif score <= 75:
+            range_desc = "early visibility range"
+        else:
+            range_desc = "advanced visibility range"
 
         print(f"📧 EMAIL DISPATCHER: Preparing SendGrid email for {to_email}...")
 
         message = Mail(
             from_email=self.from_email,
             to_emails=to_email,
-            subject=f"Your AI Visibility Audit: {business_name}",
+            subject="Your AI Visibility Score Is Ready",
             html_content=f"""
-                <p>Hello,</p>
-                <p>Your AI Visibility Audit for <strong>{business_name}</strong> is complete.</p>
-                <p>Attached is your high-level Visibility Summary PDF.</p>
-                <p>This report assesses how AI agents (like ChatGPT, Perplexity, and Gemini) currently perceive and trust your brand across 5 critical visibility layers.</p>
-                <p>If you have any questions about your score or the recommended "Fastest Score Gains," feel free to reach out.</p>
+                <p>Hello {first_name},</p>
+                
+                <p>Your AI Visibility Audit is complete.</p>
+                
+                <p>Your current AI Visibility Score is <strong>{score}</strong>, which places your brand in the {range_desc}. AI systems can find and understand your business, but they are not yet confident enough to consistently cite or recommend it.</p>
+                
+                <p>Attached is your AI Visibility Summary PDF. It breaks down how AI agents like ChatGPT, Perplexity, and Gemini interpret your brand across five critical layers.</p>
+                
+                <p><strong>Here is the key takeaway:</strong></p>
+                
+                <p>Your strongest signal is <strong>Automation Readiness</strong>.<br>
+                Your biggest constraint is a combination of <strong>Semantic Alignment and Authority</strong>.</p>
+                
+                <p>This means your systems are ready to convert attention, but AI lacks the clarity and third-party validation required to send that attention consistently.</p>
+                
+                <p>Inside the report you will find:
+                <ul>
+                    <li>Your full layer-by-layer score breakdown</li>
+                    <li>The primary visibility bottleneck limiting growth</li>
+                    <li>The fastest actions to unlock score gains</li>
+                </ul></p>
+                
+                <p>Most brands scoring between 55 and 75 see meaningful improvement once these gaps are addressed.</p>
+                
+                <p>If you would like help turning this score into measurable AI-driven visibility and lead flow, the next step is a short strategy session to map the fastest path forward.</p>
+                
                 <p>Best regards,<br>
-                The Pelican Panache Team</p>
+                <strong>Marcus Martin</strong><br>
+                Founder, Pelican Panache</p>
             """
         )
 
         if self.bcc_email:
-            print(f"📧 EMAIL DISPATCHER: Adding BCC: {self.bcc_email}")
             message.add_bcc(self.bcc_email)
-        else:
-            print("📧 EMAIL DISPATCHER: No BCC_EMAIL configured.")
 
         # Attach PDF
         try:
             with open(pdf_path, 'rb') as f:
                 data = f.read()
-                f.close()
             encoded_file = base64.b64encode(data).decode()
 
             attachedFile = Attachment(

@@ -133,7 +133,9 @@ def execute_audit(business_name: str, url: str, email: str, contact_name: str = 
     dispatcher.send_audit_report(
         to_email=submission.contact_email,
         business_name=submission.business_name,
-        pdf_path=pdf_file
+        pdf_path=pdf_file,
+        contact_name=contact_name,
+        score=result.overall_score.total_points
     )
 
     # 6. Internal Storage
