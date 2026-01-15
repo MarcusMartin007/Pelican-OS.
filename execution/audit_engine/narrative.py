@@ -241,8 +241,15 @@ AUDIT DATA:
 
         try:
             genai.configure(api_key=api_key)
-            model = genai.GenerativeModel('gemini-1.5-pro')
-            print("🧠 NARRATIVE ENGINE: Calling Gemini Pro...")
+            
+            # Debug: List available models if this is the first run
+            print("🔍 NARRATIVE ENGINE: Listing available models...")
+            for m in genai.list_models():
+                if 'generateContent' in m.supported_generation_methods:
+                    print(f"   - {m.name}")
+            
+            model = genai.GenerativeModel('gemini-1.5-flash')
+            print("🧠 NARRATIVE ENGINE: Calling Gemini 1.5 Flash...")
             response = model.generate_content([system_prompt, audit_data])
             
             if response and response.text:
