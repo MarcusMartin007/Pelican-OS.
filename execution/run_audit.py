@@ -145,14 +145,16 @@ def execute_audit(business_name: str, url: str, email: str, contact_name: str = 
             custom_body=ai_email_body
         )
     else:
-        # Fallback to standard template if AI fails
-        print("⚠️ AI FOLLOW-UP: Generation failed or skipped. Using fallback template.")
+        # Fallback to smart template if AI fails
+        print("⚠️ AI FOLLOW-UP: Generation failed or skipped. Using smart fallback template.")
         dispatcher.send_audit_report(
             to_email=submission.contact_email,
             business_name=submission.business_name,
             pdf_path=pdf_file,
             contact_name=contact_name,
-            score=result.overall_score.total_points
+            score=result.overall_score.total_points,
+            strongest=narrative.get("strength_summary"),
+            bottleneck=narrative.get("bottleneck_impact")
         )
 
     # 6. Internal Storage

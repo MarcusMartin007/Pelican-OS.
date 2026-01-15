@@ -83,20 +83,26 @@ class NarrativeEngine:
         """
         api_key = os.getenv("GOOGLE_API_KEY")
         if not api_key:
-            print("⚠️ NARRATIVE ENGINE: GOOGLE_API_KEY missing. Skipping AI email generation.")
+            print("❌ NARRATIVE ENGINE: GOOGLE_API_KEY environment variable is missing!")
             return ""
 
+        print(f"🚀 NARRATIVE ENGINE: Starting AI email generation for {submission.contact_email}...")
+
         # Prepare Data for Prompt
-        sorted_layers = sorted(score.layer_scores, key=lambda l: l.points_earned)
-        bottleneck = sorted_layers[0] if sorted_layers else None
-        strengths = [l.name for l in score.layer_scores if l.percentage >= 80]
-        gaps = [l.name for l in score.layer_scores if l.percentage < 60]
-        
-        # Format Layer Scores
-        layer_scores_text = "\n".join([f"• {l.name}: {l.points_earned}/{l.max_points} ({l.percentage}%)" for l in score.layer_scores])
-        
-        # Format Next Steps
-        fastest_gains = "\n".join([f"• {step}" for step in self._generate_next_steps(bottleneck.layer_id, sorted_layers)])
+        try:
+            sorted_layers = sorted(score.layer_scores, key=lambda l: l.points_earned)
+            bottleneck = sorted_layers[0] if sorted_layers else None
+            strengths = [l.name for l in score.layer_scores if l.percentage >= 80]
+            gaps = [l.name for l in score.layer_scores if l.percentage < 60]
+            
+            # Format Layer Scores
+            layer_scores_text = "\n".join([f"• {l.name}: {l.points_earned}/{l.max_points} ({l.percentage}%)" for l in score.layer_scores])
+            
+            # Format Next Steps
+            fastest_gains = "\n".join([f"• {step}" for step in self._generate_next_steps(bottleneck.layer_id, sorted_layers)])
+        except Exception as e:
+            print(f"❌ NARRATIVE ENGINE: Error formatting audit data for prompt: {e}")
+            return ""
 
         system_prompt = """
 SYSTEM PROMPT: AI VISIBILITY FOLLOW-UP EMAIL GENERATOR
@@ -233,15 +239,22 @@ AUDIT DATA:
 {fastest_gains}
 """
 
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-1.5-pro')
-        
         try:
+            genai.configure(api_key=api_key)
+            model = genai.GenerativeModel('gemini-1.5-pro')
+            print("🧠 NARRATIVE ENGINE: Calling Gemini Pro...")
             response = model.generate_content([system_prompt, audit_data])
-            return response.text.strip()
+            
+            if response and response.text:
+                print(f"✅ NARRATIVE ENGINE: AI email generated successfully ({len(response.text)} chars).")
+                return response.text.strip()
+            else:
+                print("⚠️ NARRATIVE ENGINE: Gemini returned an empty response.")
+                return ""
         except Exception as e:
             print(f"❌ NARRATIVE ENGINE ERROR: Gemini generation failed: {e}")
             return ""
+
 
     def _get_bottleneck_impact(self, layer_id: int) -> str:
         impacts = {

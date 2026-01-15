@@ -14,10 +14,11 @@ class EmailDispatcher:
     def is_configured(self):
         return all([self.api_key, self.from_email])
 
-    def send_audit_report(self, to_email: str, business_name: str, pdf_path: str, contact_name: str = None, score: int = 0, custom_body: str = None):
+    def send_audit_report(self, to_email: str, business_name: str, pdf_path: str, contact_name: str = None, 
+                          score: int = 0, custom_body: str = None, strongest: str = None, bottleneck: str = None):
         """
         Sends the audit report PDF as an attachment using the SendGrid Web API.
-        Uses a new high-conversion template or a custom AI-generated body.
+        Uses a custom AI-generated body or falls back to a template.
         """
         if not self.is_configured():
             print("⚠️ EMAIL DISPATCHER: SendGrid API not configured (SENDGRID_API_KEY or FROM_EMAIL missing). Skipping email delivery.")
@@ -27,9 +28,15 @@ class EmailDispatcher:
         
         # Use AI-generated body if provided, otherwise fallback to template
         if custom_body:
+            print(f"📧 EMAIL DISPATCHER: Using personalized AI-generated body for {to_email}")
             # Ensure newlines are converted to HTML breaks since SendGrid expects HTML
             html_body = custom_body.replace('\n', '<br>')
         else:
+            print(f"📧 EMAIL DISPATCHER: AI generation failed or skipped. Using smart fallback for {to_email}")
+            # Use provided summary data or reasonable defaults for the fallback
+            str_signal = strongest if strongest else "Automation Readiness"
+            bn_signal = bottleneck if bottleneck else "Semantic Alignment and Authority"
+            
             # Determine visibility range description
             if score < 55:
                 range_desc = "foundational visibility range"
@@ -49,8 +56,8 @@ class EmailDispatcher:
                 
                 <p><strong>Here is the key takeaway:</strong></p>
                 
-                <p>Your strongest signal is <strong>Automation Readiness</strong>.<br>
-                Your biggest constraint is a combination of <strong>Semantic Alignment and Authority</strong>.</p>
+                <p>Your strongest signal is <strong>{str_signal}</strong>.<br>
+                Your biggest constraint is <strong>{bn_signal}</strong>.</p>
                 
                 <p>This means your systems are ready to convert attention, but AI lacks the clarity and third-party validation required to send that attention consistently.</p>
                 
@@ -70,7 +77,7 @@ class EmailDispatcher:
                 Founder, Pelican Panache</p>
             """
 
-        print(f"📧 EMAIL DISPATCHER: Preparing SendGrid email for {to_email}...")
+        print(f"📧 EMAIL DISPATCHER: Sending SendGrid email to {to_email}...")
 
         message = Mail(
             from_email=self.from_email,
