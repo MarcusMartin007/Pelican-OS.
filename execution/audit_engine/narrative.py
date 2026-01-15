@@ -233,23 +233,22 @@ AUDIT DATA:
 • Visibility Stage Classification: {"Early" if score.total_points <= 75 else "Advanced" if score.total_points > 75 else "Foundational"}
 • Layer Scores:
 {layer_scores_text}
-• Primary Visibility Bottleneck: {bottleneck.name if bottleneck else "N/A"}
-• Detected Strengths: {", ".join(strengths) if strengths else "None"}
+• Primary Visibility Bottleneck: {bottleneck.name if bottleneck else "Incomplete Data"}
+• Detected Strengths: {", ".join(strengths) if strengths else "None (Latent Potential)"}
 • Fastest Score Gains:
 {fastest_gains}
+
+NOTE: A score of 0 indicates that AI agents currently find zero identifiable signals for this brand. The focus should be on creating the first 'signal of record'.
 """
 
         try:
             genai.configure(api_key=api_key)
             
-            # Debug: List available models if this is the first run
-            print("🔍 NARRATIVE ENGINE: Listing available models...")
-            for m in genai.list_models():
-                if 'generateContent' in m.supported_generation_methods:
-                    print(f"   - {m.name}")
+            # Use the most stable model identifier
+            model_name = 'gemini-1.5-flash'
+            model = genai.GenerativeModel(model_name)
+            print(f"🧠 NARRATIVE ENGINE: Calling {model_name}...")
             
-            model = genai.GenerativeModel('gemini-1.5-flash')
-            print("🧠 NARRATIVE ENGINE: Calling Gemini 1.5 Flash...")
             response = model.generate_content([system_prompt, audit_data])
             
             if response and response.text:

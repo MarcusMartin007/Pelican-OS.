@@ -33,17 +33,28 @@ class EmailDispatcher:
             html_body = custom_body.replace('\n', '<br>')
         else:
             print(f"📧 EMAIL DISPATCHER: AI generation failed or skipped. Using smart fallback for {to_email}")
-            # Use provided summary data or reasonable defaults for the fallback
-            str_signal = strongest if strongest else "Automation Readiness"
-            bn_signal = bottleneck if bottleneck else "Semantic Alignment and Authority"
             
             # Determine visibility range description
-            if score < 55:
+            if score < 25:
                 range_desc = "foundational visibility range"
+                benchmark_text = "" # Don't show benchmark for very low scores
             elif score <= 75:
                 range_desc = "early visibility range"
+                benchmark_text = "<p>Most brands scoring between 55 and 75 see meaningful improvement once these gaps are addressed.</p>"
             else:
                 range_desc = "advanced visibility range"
+                benchmark_text = "<p>Your brand is in a strong position to dominate AI-driven search results.</p>"
+
+            # Smart phrasing for takeaways
+            if strongest and "No dominant strengths" not in strongest:
+                str_text = f"Your strongest signal is <strong>{strongest}</strong>."
+            else:
+                str_text = "Your digital presence is currently in a <strong>foundational building phase</strong> (no dominant strengths detected yet)."
+
+            if bottleneck:
+                bn_text = f"Your biggest constraint is <strong>{bottleneck}</strong>."
+            else:
+                bn_text = "Your biggest constraint involves a <strong>lack of verifiable brand authority and semantic structure</strong>."
             
             html_body = f"""
                 <p>Hello {first_name},</p>
@@ -56,8 +67,8 @@ class EmailDispatcher:
                 
                 <p><strong>Here is the key takeaway:</strong></p>
                 
-                <p>Your strongest signal is <strong>{str_signal}</strong>.<br>
-                Your biggest constraint is <strong>{bn_signal}</strong>.</p>
+                <p>{str_text}<br>
+                {bn_text}</p>
                 
                 <p>This means your systems are ready to convert attention, but AI lacks the clarity and third-party validation required to send that attention consistently.</p>
                 
@@ -68,7 +79,7 @@ class EmailDispatcher:
                     <li>The fastest actions to unlock score gains</li>
                 </ul></p>
                 
-                <p>Most brands scoring between 55 and 75 see meaningful improvement once these gaps are addressed.</p>
+                {benchmark_text}
                 
                 <p>If you would like help turning this score into measurable AI-driven visibility and lead flow, the next step is a short strategy session to map the fastest path forward.</p>
                 
