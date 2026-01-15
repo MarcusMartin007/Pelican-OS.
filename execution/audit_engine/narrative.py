@@ -1,5 +1,6 @@
 from .models import OverallScore, AuditSubmission
 import google.generativeai as genai
+from google.generativeai.types import HarmCategory, HarmBlockThreshold
 import os
 
 class NarrativeEngine:
@@ -85,6 +86,10 @@ class NarrativeEngine:
         if not api_key:
             print("❌ NARRATIVE ENGINE: GOOGLE_API_KEY environment variable is missing!")
             return ""
+        
+        # Debug: Check API Key format (masking most of it)
+        masked_key = f"{api_key[:5]}...{api_key[-5:]}" if len(api_key) > 10 else "TOO_SHORT"
+        print(f"🔑 NARRATIVE ENGINE: API Key found (Length: {len(api_key)}, Format: {masked_key})")
 
         print(f"🚀 NARRATIVE ENGINE: Starting AI email generation for {submission.contact_email}...")
 
@@ -242,16 +247,26 @@ NOTE: A score of 0 indicates that AI agents currently find zero identifiable sig
 """
 
         # Try multiple models in case of name changes or availability issues
-        models_to_try = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro']
+        models_to_try = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash-exp', 'gemini-1.0-pro']
         last_error = ""
+
+        safety_settings = {
+            HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+            HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+            HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+            HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+        }
 
         for model_name in models_to_try:
             try:
                 genai.configure(api_key=api_key)
                 model = genai.GenerativeModel(model_name)
-                print(f"🧠 NARRATIVE ENGINE: Attempting to call {model_name}...")
+                print(f"🧠 NARRATIVE ENGINE: Attempting to call {model_name}... (Prompt Length: {len(system_prompt) + len(audit_data)})")
                 
-                response = model.generate_content([system_prompt, audit_data])
+                response = model.generate_content(
+                    [system_prompt, audit_data],
+                    safety_settings=safety_settings
+                )
                 
                 # Check if we have a valid response
                 if response:
@@ -263,6 +278,9 @@ NOTE: A score of 0 indicates that AI agents currently find zero identifiable sig
                     except (ValueError, AttributeError) as e:
                         # This usually means safety filters blocked the response
                         print(f"⚠️ NARRATIVE ENGINE: {model_name} response blocked by safety filters or empty: {e}")
+                        # Log safety ratings if possible
+                        if hasattr(response, 'prompt_feedback'):
+                            print(f"   - Prompt Feedback: {response.prompt_feedback}")
                         continue 
                 
                 print(f"⚠️ NARRATIVE ENGINE: {model_name} returned an empty or invalid response.")
