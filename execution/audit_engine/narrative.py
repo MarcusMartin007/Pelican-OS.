@@ -241,25 +241,38 @@ AUDIT DATA:
 NOTE: A score of 0 indicates that AI agents currently find zero identifiable signals for this brand. The focus should be on creating the first 'signal of record'.
 """
 
-        try:
-            genai.configure(api_key=api_key)
-            
-            # Use the most stable model identifier
-            model_name = 'gemini-1.5-flash'
-            model = genai.GenerativeModel(model_name)
-            print(f"🧠 NARRATIVE ENGINE: Calling {model_name}...")
-            
-            response = model.generate_content([system_prompt, audit_data])
-            
-            if response and response.text:
-                print(f"✅ NARRATIVE ENGINE: AI email generated successfully ({len(response.text)} chars).")
-                return response.text.strip()
-            else:
-                print("⚠️ NARRATIVE ENGINE: Gemini returned an empty response.")
-                return ""
-        except Exception as e:
-            print(f"❌ NARRATIVE ENGINE ERROR: Gemini generation failed: {e}")
-            return ""
+        # Try multiple models in case of name changes or availability issues
+        models_to_try = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro']
+        last_error = ""
+
+        for model_name in models_to_try:
+            try:
+                genai.configure(api_key=api_key)
+                model = genai.GenerativeModel(model_name)
+                print(f"🧠 NARRATIVE ENGINE: Attempting to call {model_name}...")
+                
+                response = model.generate_content([system_prompt, audit_data])
+                
+                # Check if we have a valid response
+                if response:
+                    try:
+                        # Accessing .text can throw if the response was blocked
+                        if response.text:
+                            print(f"✅ NARRATIVE ENGINE: AI email generated successfully using {model_name} ({len(response.text)} chars).")
+                            return response.text.strip()
+                    except (ValueError, AttributeError) as e:
+                        # This usually means safety filters blocked the response
+                        print(f"⚠️ NARRATIVE ENGINE: {model_name} response blocked by safety filters or empty: {e}")
+                        continue 
+                
+                print(f"⚠️ NARRATIVE ENGINE: {model_name} returned an empty or invalid response.")
+            except Exception as e:
+                last_error = str(e)
+                print(f"❌ NARRATIVE ENGINE: Failed to use {model_name}: {e}")
+                continue
+
+        print(f"❌ NARRATIVE ENGINE ERROR: All Gemini models failed or blocked. Last error: {last_error}")
+        return ""
 
 
     def _get_bottleneck_impact(self, layer_id: int) -> str:
