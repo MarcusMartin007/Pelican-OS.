@@ -147,6 +147,10 @@ def execute_audit(business_name: str, url: str, email: str, contact_name: str = 
     else:
         # Fallback to smart template if AI fails
         print("⚠️ AI FOLLOW-UP: Generation failed or skipped. Using smart fallback template.")
+        
+        # Get narrative summary if available
+        narrative = result.overall_score.ai_narrative or {}
+        
         dispatcher.send_audit_report(
             to_email=submission.contact_email,
             business_name=submission.business_name,
