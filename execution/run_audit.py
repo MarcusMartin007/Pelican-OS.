@@ -130,13 +130,30 @@ def execute_audit(business_name: str, url: str, email: str, contact_name: str = 
     # 5. Email Delivery (v1.1)
     from execution.audit_engine.delivery import EmailDispatcher
     dispatcher = EmailDispatcher()
-    dispatcher.send_audit_report(
-        to_email=submission.contact_email,
-        business_name=submission.business_name,
-        pdf_path=pdf_file,
-        contact_name=contact_name,
-        score=result.overall_score.total_points
-    )
+    
+    # Generate Personalized AI Follow-up
+    ai_email_body = narrative_engine.generate_followup_email(submission, result.overall_score)
+    
+    if ai_email_body:
+        print("✅ AI FOLLOW-UP: Personalized email body generated.")
+        dispatcher.send_audit_report(
+            to_email=submission.contact_email,
+            business_name=submission.business_name,
+            pdf_path=pdf_file,
+            contact_name=contact_name,
+            score=result.overall_score.total_points,
+            custom_body=ai_email_body
+        )
+    else:
+        # Fallback to standard template if AI fails
+        print("⚠️ AI FOLLOW-UP: Generation failed or skipped. Using fallback template.")
+        dispatcher.send_audit_report(
+            to_email=submission.contact_email,
+            business_name=submission.business_name,
+            pdf_path=pdf_file,
+            contact_name=contact_name,
+            score=result.overall_score.total_points
+        )
 
     # 6. Internal Storage
     from execution.audit_engine.storage import InternalStorage

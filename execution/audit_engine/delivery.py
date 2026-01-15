@@ -14,10 +14,10 @@ class EmailDispatcher:
     def is_configured(self):
         return all([self.api_key, self.from_email])
 
-    def send_audit_report(self, to_email: str, business_name: str, pdf_path: str, contact_name: str = None, score: int = 0):
+    def send_audit_report(self, to_email: str, business_name: str, pdf_path: str, contact_name: str = None, score: int = 0, custom_body: str = None):
         """
         Sends the audit report PDF as an attachment using the SendGrid Web API.
-        Uses a new high-conversion template.
+        Uses a new high-conversion template or a custom AI-generated body.
         """
         if not self.is_configured():
             print("⚠️ EMAIL DISPATCHER: SendGrid API not configured (SENDGRID_API_KEY or FROM_EMAIL missing). Skipping email delivery.")
@@ -25,21 +25,20 @@ class EmailDispatcher:
 
         first_name = contact_name.split()[0] if contact_name else "Guest"
         
-        # Determine visibility range description
-        if score < 55:
-            range_desc = "foundational visibility range"
-        elif score <= 75:
-            range_desc = "early visibility range"
+        # Use AI-generated body if provided, otherwise fallback to template
+        if custom_body:
+            # Ensure newlines are converted to HTML breaks since SendGrid expects HTML
+            html_body = custom_body.replace('\n', '<br>')
         else:
-            range_desc = "advanced visibility range"
-
-        print(f"📧 EMAIL DISPATCHER: Preparing SendGrid email for {to_email}...")
-
-        message = Mail(
-            from_email=self.from_email,
-            to_emails=to_email,
-            subject="Your AI Visibility Score Is Ready",
-            html_content=f"""
+            # Determine visibility range description
+            if score < 55:
+                range_desc = "foundational visibility range"
+            elif score <= 75:
+                range_desc = "early visibility range"
+            else:
+                range_desc = "advanced visibility range"
+            
+            html_body = f"""
                 <p>Hello {first_name},</p>
                 
                 <p>Your AI Visibility Audit is complete.</p>
@@ -70,6 +69,14 @@ class EmailDispatcher:
                 <strong>Marcus Martin</strong><br>
                 Founder, Pelican Panache</p>
             """
+
+        print(f"📧 EMAIL DISPATCHER: Preparing SendGrid email for {to_email}...")
+
+        message = Mail(
+            from_email=self.from_email,
+            to_emails=to_email,
+            subject="Your AI Visibility Score Is Ready",
+            html_content=html_body
         )
 
         if self.bcc_email:

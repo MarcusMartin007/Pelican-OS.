@@ -1,4 +1,6 @@
 from .models import OverallScore, AuditSubmission
+import google.generativeai as genai
+import os
 
 class NarrativeEngine:
     """
@@ -74,6 +76,172 @@ class NarrativeEngine:
             "closing_line": closing,
             "benchmark_text": benchmark
         }
+
+    def generate_followup_email(self, submission: AuditSubmission, score: OverallScore) -> str:
+        """
+        Generates a personalized follow-up email using Google Gemini.
+        """
+        api_key = os.getenv("GOOGLE_API_KEY")
+        if not api_key:
+            print("⚠️ NARRATIVE ENGINE: GOOGLE_API_KEY missing. Skipping AI email generation.")
+            return ""
+
+        # Prepare Data for Prompt
+        sorted_layers = sorted(score.layer_scores, key=lambda l: l.points_earned)
+        bottleneck = sorted_layers[0] if sorted_layers else None
+        strengths = [l.name for l in score.layer_scores if l.percentage >= 80]
+        gaps = [l.name for l in score.layer_scores if l.percentage < 60]
+        
+        # Format Layer Scores
+        layer_scores_text = "\n".join([f"• {l.name}: {l.points_earned}/{l.max_points} ({l.percentage}%)" for l in score.layer_scores])
+        
+        # Format Next Steps
+        fastest_gains = "\n".join([f"• {step}" for step in self._generate_next_steps(bottleneck.layer_id, sorted_layers)])
+
+        system_prompt = """
+SYSTEM PROMPT: AI VISIBILITY FOLLOW-UP EMAIL GENERATOR
+
+You are generating a personalized follow-up email for an AI Visibility Audit.
+
+You must NOT use static templates or prewritten summaries.
+
+You must generate the email directly from the structured audit data provided to you.
+
+Your output must feel observant, modern, human, and precise.
+Sexy, confident, calm. Never robotic. Never salesy.
+
+DATA SOURCE RULES
+You must ingest and rely only on the following audit fields:
+
+• Overall Visibility Score
+• Visibility Grade
+• Layer Scores for all five layers
+• Primary Visibility Bottleneck
+• Detected Strengths OR confirmation that no strengths exist
+• Fastest Score Gains
+• Visibility Stage Classification
+
+Do not invent strengths.
+Do not soften weaknesses.
+Do not contradict the data.
+
+STRUCTURE RULES
+The email must be assembled modularly using conditional logic.
+
+Do NOT write a single monolithic paragraph.
+
+Required sections, in order:
+
+Human opening using the recipient’s first name
+
+Clear statement of current Visibility Score and what that stage means
+
+Plain-English explanation of how AI currently perceives the brand
+
+Honest identification of the primary bottleneck
+
+Interpretation of what this bottleneck prevents AI from doing
+
+Grounded framing of opportunity, not aspiration
+
+Contextual CTA aligned to readiness level
+
+TONE LOGIC BY SCORE
+
+If Visibility Score < 25
+• Tone is grounding, clarifying, supportive
+• Emphasize foundation and signal clarity
+• Do NOT reference benchmark ranges unless framed as future state
+• CTA should feel like guidance, not selling
+
+If Visibility Score 25–50
+• Tone shifts to prioritization and momentum
+
+If Visibility Score > 50
+• Tone shifts to leverage and acceleration
+
+STRENGTH LOGIC
+
+Only label a strength if a layer score exceeds its defined threshold.
+
+If no strengths exist
+• Explicitly acknowledge this
+• Reframe as “latent potential” or “unlocked later leverage”
+• Never imply readiness where it does not exist
+
+BOTTLENECK LOGIC
+
+Bottleneck explanation must be dynamically written using this structure:
+
+• What AI can technically do today
+• What AI cannot confidently do
+• Why that lack of confidence matters
+
+This explanation must reference the actual failing layers.
+
+PERSONALIZATION REQUIREMENT
+
+Include exactly one inference-based line that shows understanding, such as:
+
+• Brand stage acknowledgment
+• Normalization of score for similar businesses
+• Framing the audit as a snapshot in time
+
+Do not use hype.
+Do not use motivational language.
+
+CTA RULES
+
+CTA must align with readiness.
+
+For low scores, CTA language examples:
+• “pressure-test the report”
+• “map the fastest path forward”
+• “decide what not to fix yet”
+
+Never push urgency.
+Never imply obligation.
+
+STYLE CONSTRAINTS
+
+• Write in short, confident sentences
+• Avoid corporate phrasing
+• Avoid marketing clichés
+• Avoid generic AI language
+• Sound like a sharp human advisor who actually read the report
+
+OUTPUT
+
+Return only the final email body.
+No explanations.
+No markdown.
+No bullet points.
+No subject line.
+"""
+
+        audit_data = f"""
+AUDIT DATA:
+• Recipient First Name: {submission.business_name.split()[0]}
+• Overall Visibility Score: {score.total_points}
+• Visibility Grade: {score.grade}
+• Visibility Stage Classification: {"Early" if score.total_points <= 75 else "Advanced" if score.total_points > 75 else "Foundational"}
+• Layer Scores:
+{layer_scores_text}
+• Primary Visibility Bottleneck: {bottleneck.name if bottleneck else "N/A"}
+• Detected Strengths: {", ".join(strengths) if strengths else "None"}
+• Fastest Score Gains:
+{fastest_gains}
+"""
+
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('gemini-1.5-pro')
+        
+        try:
+            response = model.generate_content([system_prompt, audit_data])
+            return response.text.strip()
+        except Exception as e:
+            print(f"❌ NARRATIVE ENGINE ERROR: Gemini generation failed: {e}")
+            return ""
 
     def _get_bottleneck_impact(self, layer_id: int) -> str:
         impacts = {
